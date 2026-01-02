@@ -250,4 +250,207 @@ select * from studenttable where sname like 'S%';
 select * from studenttable where sname like '%S' or  sname like '%N';
 select * from studenttable;
 
+--day 22/12/2025
+--nvarchar
+create table student(id int primary key,
+name nvarchar(10) not null );
 
+insert into student values(101,N'ರಮೇಶ್');
+insert into student values(102,'SHREYAS');
+insert into student values(103,'SHREYAS');
+insert into student values(104,N'ರಮೇಶ್');
+
+select * from student;
+
+--day 23/12/2025
+--mathematical functions 
+--flore function  
+select floor(25.66);
+select floor(-25.66);
+
+--ceiling function 
+select ceiling(25.66);
+select CEILING(-25.66);
+
+--abs function  
+select abs(-25);
+
+--round function 
+select avg(amt) from orders;
+select round(avg(amt),1) from orders;
+select round(100.844,2);
+
+--convert function 
+select convert(dec(10,2),round(avg(amt),2)) from orders;
+--square function
+select square(9);
+--sqrt function 
+select sqrt(9);
+--power function 
+select power(5,2);
+
+--compound intrest 
+select convert(dec(10,2),500000 * power( 1 + 7.00/100.00 , 0.5) - 500000);
+-- ans 17204.02
+
+select * from orders;
+--month,year,day function in date 
+select *,day(odate) as 'day',month(odate) as 'month',year(odate) as 'year' from orders;
+
+select month(odate) as'month of 2025' ,sum(amt) as'total amount per month' from orders 
+where year(odate)=2025
+group by month(odate) ;
+
+--find total amount of sales on 2025/12/18
+select day(odate) as 'day 18 of 12 th month 2025' ,sum(amt) as'total amount per day of 18' from orders 
+where year(odate)=2025 and month(odate)=12 and day(odate)=18
+group by day(odate) ;
+
+select * from orders ;
+
+
+
+--24/12/2006
+--find the total sales in every month
+select datename(mm,odate) as 'month' ,
+year(odate) as 'year' ,
+sum(amt) as 'Total sales'
+from orders
+group by year(odate),datename(mm,odate),month(odate)
+order by year(odate),month(odate) ;
+
+-- this will show you name of the month 
+select datename(mm,odate) from orders;
+
+--print month date 
+select *,datename(dw,odate) from orders
+order by day(odate) ;
+
+
+select *,datename(dw,odate),datepart(dw,odate) from orders
+order by datepart(dw,odate);
+
+--to take current date and time 
+select  getdate();
+
+-- i want only date 
+select convert(date,getDate());
+
+-- i want only time 
+select convert(time,getDate());
+
+--round of the amount with 2 digits 
+select  convert(dec(10,2) ,round(avg(amt),2)) from orders;
+
+--to find the difference between the dates
+select *,datediff(dd,odate,convert(date,getdate())) as 'No of days difference ' from orders;
+
+select datediff(dd,'2006-12-24',convert(date,getdate())) ;
+
+--to take first five 
+select top 5* ,datediff(dd,odate,convert(date,getdate())) from orders;
+select (1000000*0.09*(datediff(dd,'2025-04-01',convert(date,getdate()))+1)/365.00 );
+
+
+
+
+--26/12/2025
+
+-- print customer wise total sales
+select cnum,sum(amt) from orders 
+group by cnum ;
+
+-- joining tables 
+--join syntax
+
+select * from orders join customer
+on 
+orders.cnum = customer.cnum;
+
+select orders.cnum , cname from orders join customer 
+on orders.cnum=customer.cnum
+group by orders.cnum,cname;
+
+select  orders.cnum,
+cname,sum(amt) as 'Total sales',
+max(amt) as 'highest order '   
+from   orders  join customer 
+on 
+orders.cnum = customer.cnum
+group by orders.cnum,cname;
+
+select * from customer ;
+select * from studenttable;
+
+select * from  customer join studenttable  
+on customer.sid=studenttable.sid;
+
+
+--print snum,sname and count no of customer
+
+select studenttable.sid,sname,count(cnum) from customer right outer  join studenttable 
+on customer.sid = studenttable.sid
+group by studenttable.sid,sname;
+
+
+--29/12/2025
+--right outer joint
+select * from customer   join orders
+on customer.cnum= orders.cnum;
+--right outer joint
+select * from customer right outer join studenttable
+on customer.sid= studenttable.sid;
+
+
+--distinct clause
+--distint : it will give all names without repeation 
+select * from customer;
+select distinct city,rating from customer;
+--we can se in this output bangalore not repeating twice 
+insert into customer values (1031,'Shravan S','Bangalore',4.5,103,'india');
+insert into customer values (1032,'Shravan S','Bangalore',4.5,103,'india');
+
+
+
+--create  stored procedure 
+--syntax to made our own procedure 
+create PROCEDURE display_customer
+as
+select * from customer;
+go
+--
+create PROCEDURE display_customer_name_city
+as
+select cname,city from customer;
+go
+--
+exec display_customer_name_city
+exec display_customer
+
+exec sp_help customer;
+
+--using procedure if user intered city name all details has to come who are belongs to that city 
+--NOTE : HERE WE ARE USING 'set nocount on ' -->> THIS will not show how maney rows are effecte like that message
+CREATE PROCEDURE display_customer_city
+@city varchar(30)
+as 
+set nocount on ;
+select * from customer where city=@city;
+go
+
+exec display_customer_city mandya
+
+
+--30/12/2025
+--take maltiple inputs from the users
+create procedure oders_insert
+@onum int 
+@amt decimal(10,12)
+@odate date
+
+cname 
+as 
+set nocount on;
+insert into orders values(@onum,@amt,@odate,(select ));
+
+select * from orders;
