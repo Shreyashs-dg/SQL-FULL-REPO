@@ -454,3 +454,211 @@ set nocount on;
 insert into orders values(@onum,@amt,@odate,(select ));
 
 select * from orders;
+
+
+
+--union
+create table sales(id int primary key,
+name varchar(20) not null);
+
+insert into sales values(1,'Shreyas'),(2,'Sudeep');
+
+create table management(id int primary key,
+name varchar(20) not null);
+insert into management values(1,'Shreyas'),(3,'Salaga');
+
+select * from sales
+union  
+select * from management;
+
+--union all 
+select * from sales
+union  all
+select * from management;
+
+
+--rules on a given table 
+create rule cityname
+as @city in ('Bangalore','Mandya','Davangere','cng','Hrp');
+
+create table cust(id int not null primary key,
+city varchar(20) not null);
+exec sp_bindrule 'dbo.cityname','cust.city';
+
+insert into cust (id,city) values (101,'Bangalore');
+insert into cust (id,city) values (102,'Bangalore');
+insert into cust (id,city) values (103,'davangere');
+select * from cust;
+
+--31/12/2025
+--rules to add numbers > 0
+create rule post_amt
+as @num > 0 ;
+
+exec sp_bindrule 'dbo.post_amt','customer.cnum';
+exec sp_bindrule 'dbo.post_amt','studenttable.sid';
+exec sp_bindrule 'dbo.post_amt','orders.amt';
+
+--if you want to quit that rule use unbind
+exec sp_unbindrule 'studenttable.sid';
+insert into orders values (2027,-10,'2026-01-03',1031);---error change -10 to 10
+
+--NOTE : rule can be droped after unbounding from all the colums
+
+--sub queryes --> query within a query--> inner query run first
+
+select * from orders where cnum in (select cnum from customer where city='bangalore');
+
+--find the customer details whose order average is above 2000
+select * from customer where cnum in(select cnum from orders group by cnum having (avg(amt) >= 1000));
+
+--find the order having max value order
+select * from orders where amt=(select max(amt) from orders);
+
+
+--find the 2nd heighest order
+select * from orders where amt=(select max(amt) from orders where amt<(select max(amt) from orders));
+
+ 
+--2/1/2026
+--rank function () 
+create table rank_table (Name varchar(20));
+insert into rank_table values ('A'),('B'),('B'),('C'),('C'),('C'),('E');
+select Name,rank() over(order by Name) as Rank_column from rank_table;
+
+--dense rank function 
+select name,dense_rank() over(order by name ) as 'Dense Rank no' from rank_table;
+
+--print 2nd rank using sub query 
+select name,rank_no from
+(select name,rank() over(order by name )as rank_no
+from rank_table)x 
+where rank_no = 2;
+
+--top 5 ranks 
+select name,rank_no from
+(select name,rank() over(order by name)as rank_no
+from rank_table)x 
+where rank_no <=5;
+
+
+--create table 2 with name and marks 
+create table rank2(name varchar(20),marks int );
+insert into rank2 (name,marks) values ('A',98),('B',97),('C',96),('D',100);
+SELECT name,marks,rank() over (order by marks desc) as marks FROM rank2;
+
+--create rule for marks should be less than 100
+create rule mark
+as @mark <=100; 
+exec sp_bindrule 'dbo.mark','rank2.marks';
+
+--partession by command
+create table class(name varchar(20),marks int ,section varchar(2));
+
+insert into class (name,marks,section) VALUES('John',90,'B'),('Amy',80,'B'),('Alan',100,'A'),('Henry',40,'B'),('Mary',60,'A');
+select * from class;
+
+select name,section,marks,rank() over(partition by section  order by marks) from class;
+
+--row number function 
+select row_number() over(partition by section order by marks desc)as 'sl no',name,section,marks from class;
+
+--importing files from excel
+select * from emp;
+
+select max(quantity*Unit_price) from walmart_sales ;
+select max(quantity) from walmart_sales ;
+select * from Walmart_Sales;
+
+
+--5/1/2026
+select * from
+create view cusmer as 
+select cnum,cname from customer;
+ cusmer;
+
+
+
+
+ -- creating order_item table 
+create table order_items(
+order_id int not null primary key,
+prod_id varchar(10),
+quantity int,
+list_price decimal(10,2),
+discount decimal(4,2)
+);
+
+--inserting vatues to order_item table 
+insert into order_items values(1, 'P001', 100, 50, 2.5);
+insert into order_items values(2, 'P002', 50, 40, 4.0);
+insert into order_items values(3, 'P004', 1000, 25, 0);
+insert into order_items values(4, 'P001', 200, 50, 2.5);
+
+select * from order_items;
+
+--creating user defined function (udf) ->Scalar function 
+create function 
+udfnetamount(
+    @quantity int ,
+    @list_price decimal(10,2),
+    @discount decimal(4,2))
+returns dec(10,2)
+begin
+	return @quantity * @list_price * ((100 - @discount)/100);
+end;
+
+select dbo.udfnetamount(1,100,5);
+select *,dbo.udfnetamount(quantity,list_price,discount) as final_price  from order_items;
+
+--ITVF Function 
+CREATE TABLE student_details
+ (
+   Id INT PRIMARY KEY,
+   Name VARCHAR(50) NOT NULL,
+   Marks INT NOT NULL
+);
+insert into student_details values
+(1, 'Tushar', 60), (2, 'Kunal', 80), (3, 'Shivam', 30), 
+(4, 'Rushi', 45),(5, 'Mahesh',60),(6, 'Shubham',39),(7, 'Rahul',97);
+
+select * from student_details
+--creating itvf for getting derails by using marks 
+create function dbo.StudentDetailsByMarks(@Marks int )
+returns table
+as
+return(
+select Id,Name,Marks from student_details
+where marks = @Marks);
+select * from dbo.StudentDetailsByMarks(45);
+
+--itvf getting details using cutoff function 
+create function dbo.cutoffMarks(@Marks int )
+returns table
+as
+return(
+select Id,Name,Marks from student_details
+where marks >= @Marks);
+select * from dbo.cutoffMarks(45);
+
+--itvf without parameter
+create function dbo.DisplayStudentDetails()
+Returns Table
+as
+Return
+(
+select id, name, marks from student
+);
+select * from dbo.DisplayStudentDetails();
+
+
+--joinind order and customer table using view
+create view order_cust
+as 
+select onum,amt,odate,o.cnum,cname,city,rating,sid
+from orders o join customer c
+on 
+o.cnum=c.cnum;
+
+select * from order_cust;
+
